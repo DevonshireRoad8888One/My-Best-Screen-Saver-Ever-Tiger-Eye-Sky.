@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watercolor Screen Saver</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="watercolorCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('watercolorCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let time = 0;
+        const points = [];
+
+        function randomColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function createRandomPoints(numPoints) {
+            for (let i = 0; i < numPoints; i++) {
+                points.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: randomColor(),
+                    targetColor: randomColor(),
+                    changeTime: Math.random() * 100,
+                    size: Math.random() * 10 + 5
+                });
+            }
+        }
+
+        function lerpColor(a, b, amount) {
+            const [ar, ag, ab] = a.match(/\d+/g).map(Number);
+            const [br, bg, bb] = b.match(/\d+/g).map(Number);
+            const rr = ar + amount * (br - ar);
+            const rg = ag + amount * (bg - ag);
+            const rb = ab + amount * (bb - ab);
+            return `rgb(${Math.round(rr)},${Math.round(rg)},${Math.round(rb)})`;
+        }
+
+        function drawWatercolor() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height)
+            );
+
+            for (let i = 0; i <= 1; i += 0.2) {
+                gradient.addColorStop(i, `hsl(${(time * 10 + i * 360) % 360}, 100%, 50%)`);
+            }
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            points.forEach(point => {
+                if (time > point.changeTime) {
+                    point.targetColor = randomColor();
+                    point.changeTime = time + Math.random() * 100;
+                }
+                point.color = lerpColor(point.color, point.targetColor, 0.01);
+
+                point.x += point.vx;
+                point.y += point.vy;
+
+                if (point.x < 0 || point.x > canvas.width) point.vx *= -1;
+                if (point.y < 0 || point.y > canvas.height) point.vy *= -1;
+
+                ctx.fillStyle = point.color;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.globalAlpha = 0.05;
+            ctx.drawImage(canvas, Math.sin(time) * 5, Math.cos(time) * 5);
+            ctx.globalAlpha = 1.0;
+
+            time += 0.01;
+            requestAnimationFrame(drawWatercolor);
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            points.length = 0; // Clear existing points
+            createRandomPoints(200); // Create new random points
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        resizeCanvas();
+        drawWatercolor();
+    </script>
+</body>
+</html>
