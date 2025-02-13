@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watercolor Screen Saver with Clock</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+        .digital-clock {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15vw; /* Adjusted size to be a bit smaller */
+            color: rgba(255, 255, 255, 0.8); /* Frosty white color */
+            font-family: 'Arial', sans-serif; /* Changed to sans-serif font */
+            font-weight: bold; /* Make the numbers bolder */
+            line-height: 1.2; /* Taller numbers */
+            display: flex;
+            align-items: center;
+        }
+        .ampm {
+            font-size: 5vw; /* Smaller size for AM/PM */
+            vertical-align: top;
+            margin-left: 1vw; /* Space between time and AM/PM */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="watercolorCanvas"></canvas>
+    <div class="digital-clock" id="digitalClock"></div>
+    <script>
+        const canvas = document.getElementById('watercolorCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let time = 0;
+        const points = [];
+        let gradientColors = [];
+
+        function randomColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function createRandomPoints(numPoints) {
+            for (let i = 0; i < numPoints; i++) {
+                points.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: randomColor(),
+                    targetColor: randomColor(),
+                    changeTime: Math.random() * 100,
+                    size: Math.random() * 10 + 5
+                });
+            }
+        }
+
+        function lerpColor(a, b, amount) {
+            const [ar, ag, ab] = a.match(/\d+/g).map(Number);
+            const [br, bg, bb] = b.match(/\d+/g).map(Number);
+            const rr = ar + amount * (br - ar);
+            const rg = ag + amount * (bg - ag);
+            const rb = ab + amount * (bb - ab);
+            return `rgb(${Math.round(rr)},${Math.round(rg)},${Math.round(rb)})`;
+        }
+
+        function updateGradientColors() {
+            gradientColors = [];
+            for (let i = 0; i <= 1; i += 0.2) {
+                gradientColors.push(`hsl(${(Math.random() * 360)}, 100%, 50%)`);
+            }
+            setTimeout(updateGradientColors, Math.random() * 5000 + 5000); // Randomize every 5-10 seconds
+        }
+
+        function drawWatercolor() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height)
+            );
+
+            gradientColors.forEach((color, index) => {
+                gradient.addColorStop(index / (gradientColors.length - 1), color);
+            });
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            points.forEach(point => {
+                if (time > point.changeTime) {
+                    point.targetColor = randomColor();
+                    point.changeTime = time + Math.random() * 100;
+                }
+                point.color = lerpColor(point.color, point.targetColor, 0.01);
+
+                point.x += point.vx;
+                point.y += point.vy;
+
+                if (point.x < 0 || point.x > canvas.width) point.vx *= -1;
+                if (point.y < 0 || point.y > canvas.height) point.vy *= -1;
+
+                ctx.fillStyle = point.color;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.globalAlpha = 0.05;
+            ctx.drawImage(canvas, Math.sin(time) * 5, Math.cos(time) * 5);
+            ctx.globalAlpha = 1.0;
+
+            time += 0.01;
+            requestAnimationFrame(drawWatercolor);
+        }
+
+        function drawClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            hours = String(hours).padStart(2, '0');
+            const clockElement = document.getElementById('digitalClock');
+            clockElement.innerHTML = `${hours}:${minutes}:${seconds} <span class="ampm">${ampm}</span>`;
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            points.length = 0; // Clear existing points
+            createRandomPoints(200); // Create new random points
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        resizeCanvas();
+        updateGradientColors();
+        drawWatercolor();
+        setInterval(drawClock, 1000); // Update clock every second
+    </script>
+</body>
+</html>
