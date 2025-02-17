@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowing Colors Screen Saver</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            background: white;
+            transition: background-color 3s ease; /* Smooth color transition */
+        }
+        .shape {
+            position: absolute;
+            opacity: 0.7;
+            transition: background-color 2s ease; /* Smooth color transition */
+        }
+        .circle {
+            border-radius: 50%;
+        }
+        .square {
+            /* No additional styles needed for squares */
+        }
+        .triangle {
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 50px solid;
+        }
+        @keyframes spin-right {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(1800deg); } /* 5 spins to the right */
+        }
+        @keyframes spin-left {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-1800deg); } /* 5 spins to the left */
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+        @keyframes shrink {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const mainColors = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FFA500', '#800080'];
+
+        function createShapes() {
+            for (let i = 0; i < 30; i++) {
+                createShape('circle', Math.random() * 100 + 50);
+                createShape('square', Math.random() * 100 + 50);
+                createShape('triangle', Math.random() * 100 + 50);
+            }
+            for (let i = 0; i < 30; i++) {
+                createShape('circle', (Math.random() * 100 + 50) / 3, true);
+                createShape('square', (Math.random() * 100 + 50) / 3, true);
+                createShape('triangle', (Math.random() * 100 + 50) / 3, true);
+            }
+        }
+
+        function createShape(type, size, isSmall = false) {
+            const shape = document.createElement('div');
+            shape.className = `shape ${type}`;
+            if (type === 'triangle') {
+                shape.style.borderBottomColor = mainColors[Math.floor(Math.random() * mainColors.length)];
+                shape.style.borderLeftWidth = `${size / 2}px`;
+                shape.style.borderRightWidth = `${size / 2}px`;
+                shape.style.borderBottomWidth = `${size}px`;
+            } else {
+                shape.style.width = `${size}px`;
+                shape.style.height = `${size}px`;
+                shape.style.backgroundColor = mainColors[Math.floor(Math.random() * mainColors.length)];
+            }
+            shape.style.top = Math.random() * window.innerHeight + 'px';
+            shape.style.left = Math.random() * window.innerWidth + 'px';
+            shape.dataset.dx = (Math.random() * 2 - 1) * 2; // Random horizontal speed
+            shape.dataset.dy = (Math.random() * 2 - 1) * 2; // Random vertical speed
+            document.body.appendChild(shape);
+            animateShape(shape);
+            if (type !== 'circle') {
+                spinShape(shape);
+            } else {
+                bounceShape(shape);
+            }
+            if (isSmall) {
+                shrinkShape(shape);
+            } else {
+                shrinkShape(shape, true);
+            }
+        }
+
+        function animateShape(shape) {
+            setInterval(() => {
+                let top = parseFloat(shape.style.top);
+                let left = parseFloat(shape.style.left);
+                let dx = parseFloat(shape.dataset.dx);
+                let dy = parseFloat(shape.dataset.dy);
+
+                if (top + dy < 0 || top + dy + shape.offsetHeight > window.innerHeight) {
+                    dy = -dy;
+                }
+                if (left + dx < 0 || left + dx + shape.offsetWidth > window.innerWidth) {
+                    dx = -dx;
+                }
+
+                shape.style.top = top + dy + 'px';
+                shape.style.left = left + dx + 'px';
+                shape.dataset.dx = dx;
+                shape.dataset.dy = dy;
+            }, 20); // Update position every 20ms
+
+            setInterval(() => {
+                if (shape.classList.contains('triangle')) {
+                    shape.style.borderBottomColor = mainColors[Math.floor(Math.random() * mainColors.length)];
+                } else {
+                    shape.style.backgroundColor = mainColors[Math.floor(Math.random() * mainColors.length)];
+                }
+            }, 2000); // Change color every 2 seconds
+        }
+
+        function spinShape(shape) {
+            let spinRight = true;
+            setInterval(() => {
+                const spinDuration = Math.random() * 2 + 1; // Random spin duration between 1s and 3s
+                if (spinRight) {
+                    shape.style.animation = `spin-right ${spinDuration}s linear`;
+                } else {
+                    shape.style.animation = `spin-left ${spinDuration}s linear`;
+                }
+                spinRight = !spinRight;
+            }, Math.random() * 3000 + 3000); // Randomize interval between 3s and 6s
+        }
+
+        function bounceShape(shape) {
+            setInterval(() => {
+                const bounceDuration = Math.random() * 2 + 1; // Random bounce duration between 1s and 3s
+                shape.style.animation = `bounce ${bounceDuration}s ease-in-out infinite`;
+            }, Math.random() * 3000 + 3000); // Randomize interval between 3s and 6s
+        }
+
+        function shrinkShape(shape, isLarge = false) {
+            setInterval(() => {
+                const shrinkDuration = Math.random() * 5 + 5; // Random shrink duration between 5s and 10s
+                shape.style.animation = `shrink ${shrinkDuration}s linear`;
+                setTimeout(() => {
+                    shape.style.top = Math.random() * window.innerHeight + 'px';
+                    shape.style.left = Math.random() * window.innerWidth + 'px';
+                    shape.style.animation = ''; // Reset animation
+                }, shrinkDuration * 1000);
+            }, Math.random() * 10000 + 10000); // Randomize interval between 10s and 20s
+        }
+
+        function changeBackgroundColor() {
+            const colors = ['#FF5733', '#33FF57', '#3357FF', '#F333FF', '#33FFF5', '#FF33F5', '#F5FF33'];
+            document.body.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        setInterval(changeBackgroundColor, 7000); // Change background color every 7 seconds
+
+        createShapes();
+    </script>
+</body>
+</html>
