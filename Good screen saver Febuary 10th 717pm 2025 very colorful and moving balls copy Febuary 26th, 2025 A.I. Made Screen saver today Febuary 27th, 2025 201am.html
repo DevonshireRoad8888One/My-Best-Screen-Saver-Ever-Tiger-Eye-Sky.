@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rainbow Watercolor Screen Saver</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="rainbowCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('rainbowCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const rainbowColors = [
+            '#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'
+        ];
+
+        let time = 0;
+        const points = [];
+
+        function createRandomPoints(numPoints) {
+            for (let i = 0; i < numPoints; i++) {
+                points.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: getRandomColor(),
+                    size: Math.random() * 15 + 5
+                });
+            }
+        }
+
+        function getRandomColor() {
+            return rainbowColors[Math.floor(Math.random() * rainbowColors.length)];
+        }
+
+        function lerpColor(a, b, amount) {
+            const [ar, ag, ab] = a.match(/\d+/g).map(Number);
+            const [br, bg, bb] = b.match(/\d+/g).map(Number);
+            return `rgb(${Math.round(ar + amount * (br - ar))},${Math.round(ag + amount * (bg - ag))},${Math.round(ab + amount * (bb - ab))})`;
+        }
+
+        function drawRainbowEffect() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < rainbowColors.length; i++) {
+                gradient.addColorStop(i / (rainbowColors.length - 1), rainbowColors[i]);
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            points.forEach(point => {
+                point.x += point.vx;
+                point.y += point.vy;
+                
+                if (point.x < 0 || point.x > canvas.width) point.vx *= -1;
+                if (point.y < 0 || point.y > canvas.height) point.vy *= -1;
+
+                ctx.fillStyle = point.color;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            time += 0.01;
+            requestAnimationFrame(drawRainbowEffect);
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            points.length = 0;
+            createRandomPoints(200);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawRainbowEffect();
+    </script>
+</body>
+</html>
