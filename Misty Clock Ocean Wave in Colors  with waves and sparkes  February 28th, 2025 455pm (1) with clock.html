@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Wave Clock</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .clock-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vmin;
+            height: 80vmin;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(8px);
+        }
+        .clock-face {
+            width: 90%;
+            height: 90%;
+            position: relative;
+            border-radius: 50%;
+        }
+        .hand {
+            position: absolute;
+            width: 50%;
+            height: 2px;
+            background: white;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0% 50%;
+            transition-timing-function: ease-in-out;
+        }
+        .hour {
+            height: 4px;
+            width: 30%;
+        }
+        .minute {
+            height: 3px;
+            width: 40%;
+        }
+        .second {
+            height: 2px;
+            width: 45%;
+            background: red;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="oceanCanvas"></canvas>
+    <div class="clock-container">
+        <div class="clock-face">
+            <div class="hand hour" id="hour"></div>
+            <div class="hand minute" id="minute"></div>
+            <div class="hand second" id="second"></div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('oceanCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const bands = 10;
+        const colors = ['#1E90FF', '#00BFFF', '#87CEFA', '#4682B4', '#5F9EA0', '#20B2AA', '#00CED1'];
+        let angle = 0;
+
+        function drawWaves() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const bandHeight = canvas.height / bands;
+            for (let i = 0; i < bands; i++) {
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(0, i * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.25, i * bandHeight + Math.sin(angle + i) * 50,
+                    canvas.width * 0.75, i * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width, i * bandHeight
+                );
+                ctx.lineTo(canvas.width, (i + 1) * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.75, (i + 1) * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width * 0.25, (i + 1) * bandHeight + Math.sin(angle + i) * 50,
+                    0, (i + 1) * bandHeight
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+            angle += 0.005;
+            requestAnimationFrame(drawWaves);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            
+            const hourDeg = (hours * 30) + (minutes / 2);
+            const minuteDeg = (minutes * 6);
+            const secondDeg = (seconds * 6);
+            
+            document.getElementById('hour').style.transform = `rotate(${hourDeg}deg)`;
+            document.getElementById('minute').style.transform = `rotate(${minuteDeg}deg)`;
+            document.getElementById('second').style.transform = `rotate(${secondDeg}deg)`;
+        }
+
+        setInterval(updateClock, 1000);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        drawWaves();
+        updateClock();
+    </script>
+</body>
+</html>
