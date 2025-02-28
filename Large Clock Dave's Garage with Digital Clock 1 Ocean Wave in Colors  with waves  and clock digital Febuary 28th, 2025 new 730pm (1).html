@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Vortex with Clock & Bouncing Text</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #digitalClock {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px 10px rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="vortexCanvas"></canvas>
+    <div id="digitalClock"></div>
+    
+    <script>
+        const canvas = document.getElementById('vortexCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let angle = 0;
+        const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+        const circles = [];
+
+        function createCircles(num) {
+            for (let i = 0; i < num; i++) {
+                circles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 40 + 10,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+        }
+
+        let textX = Math.random() * canvas.width;
+        let textY = Math.random() * canvas.height;
+        let textVX = 2;
+        let textVY = 2;
+
+        function drawVortex() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const bandHeight = canvas.height / 10;
+            for (let i = 0; i < 10; i++) {
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(0, i * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.25, i * bandHeight + Math.sin(angle + i) * 50,
+                    canvas.width * 0.75, i * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width, i * bandHeight
+                );
+                ctx.lineTo(canvas.width, (i + 1) * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.75, (i + 1) * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width * 0.25, (i + 1) * bandHeight + Math.sin(angle + i) * 50,
+                    0, (i + 1) * bandHeight
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            circles.forEach(circle => {
+                circle.x += circle.vx;
+                circle.y += circle.vy;
+                if (circle.x < 0 || circle.x > canvas.width) circle.vx *= -1;
+                if (circle.y < 0 || circle.y > canvas.height) circle.vy *= -1;
+                ctx.fillStyle = circle.color;
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.font = "bold 60px Arial";
+            ctx.fillStyle = "white";
+            ctx.fillText("Dave's Garage", textX, textY);
+
+            textX += textVX;
+            textY += textVY;
+            if (textX < 0 || textX + ctx.measureText("Dave's Garage").width > canvas.width) textVX *= -1;
+            if (textY < 50 || textY > canvas.height - 50) textVY *= -1;
+
+            angle += 0.005;
+            requestAnimationFrame(drawVortex);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('digitalClock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            circles.length = 0;
+            createCircles(50);
+        }
+
+        setInterval(updateClock, 1000);
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawVortex();
+    </script>
+</body>
+</html>
