@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dave's Garage - Colorful Clock Screensaver</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+        .clock {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="vortexCanvas"></canvas>
+    <div id="clock" class="clock"></div>
+    <script>
+        const canvas = document.getElementById('vortexCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const bands = 10;
+        const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+        let angle = 0;
+        const circles = [];
+        const sparkles = [];
+        let textX = Math.random() * canvas.width;
+        let textY = Math.random() * canvas.height;
+        let textVX = 2;
+        let textVY = 2;
+
+        function randomColor() {
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createCircles(num) {
+            for (let i = 0; i < num; i++) {
+                circles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 40 + 10,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: randomColor()
+                });
+            }
+        }
+
+        function createSparkles(num) {
+            for (let i = 0; i < num; i++) {
+                sparkles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 5 + 1,
+                    color: Math.random() < 0.5 ? 'gold' : 'silver'
+                });
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function drawVortex() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const bandHeight = canvas.height / bands;
+            for (let i = 0; i < bands; i++) {
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(0, i * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.25, i * bandHeight + Math.sin(angle + i) * 50,
+                    canvas.width * 0.75, i * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width, i * bandHeight
+                );
+                ctx.lineTo(canvas.width, (i + 1) * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.75, (i + 1) * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width * 0.25, (i + 1) * bandHeight + Math.sin(angle + i) * 50,
+                    0, (i + 1) * bandHeight
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            sparkles.forEach(sparkle => {
+                ctx.fillStyle = sparkle.color;
+                ctx.beginPath();
+                ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+                ctx.fill();
+                sparkle.y += 1;
+                if (sparkle.y > canvas.height) sparkle.y = 0;
+            });
+
+            circles.forEach(circle => {
+                circle.x += circle.vx;
+                circle.y += circle.vy;
+                if (circle.x < 0 || circle.x > canvas.width) circle.vx *= -1;
+                if (circle.y < 0 || circle.y > canvas.height) circle.vy *= -1;
+                circle.color = randomColor(); // Change colors dynamically
+                ctx.fillStyle = circle.color;
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = "white";
+            ctx.font = "50px Arial";
+            ctx.fillText("Dave's Garage", textX, textY);
+            textX += textVX;
+            textY += textVY;
+            if (textX < 0 || textX > canvas.width - 200) textVX *= -1;
+            if (textY < 0 || textY > canvas.height - 50) textVY *= -1;
+
+            angle += 0.005;
+            updateClock();
+            requestAnimationFrame(drawVortex);
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            circles.length = 0;
+            sparkles.length = 0;
+            createCircles(50);
+            createSparkles(100);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawVortex();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
