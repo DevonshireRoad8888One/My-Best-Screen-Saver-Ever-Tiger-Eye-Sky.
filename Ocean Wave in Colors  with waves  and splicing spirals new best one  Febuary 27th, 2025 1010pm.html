@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Vortex with Circles</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="vortexCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('vortexCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const bands = 10;
+        const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+        let angle = 0;
+        const circles = [];
+
+        function createCircles(num) {
+            for (let i = 0; i < num; i++) {
+                circles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 40 + 10,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+        }
+
+        function drawVortex() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const bandHeight = canvas.height / bands;
+            for (let i = 0; i < bands; i++) {
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(0, i * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.25, i * bandHeight + Math.sin(angle + i) * 50,
+                    canvas.width * 0.75, i * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width, i * bandHeight
+                );
+                ctx.lineTo(canvas.width, (i + 1) * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.75, (i + 1) * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width * 0.25, (i + 1) * bandHeight + Math.sin(angle + i) * 50,
+                    0, (i + 1) * bandHeight
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            circles.forEach(circle => {
+                circle.x += circle.vx;
+                circle.y += circle.vy;
+                if (circle.x < 0 || circle.x > canvas.width) circle.vx *= -1;
+                if (circle.y < 0 || circle.y > canvas.height) circle.vy *= -1;
+                ctx.fillStyle = circle.color;
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            angle += 0.005; // Adjust speed for natural movement
+            requestAnimationFrame(drawVortex);
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            circles.length = 0;
+            createCircles(50);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawVortex();
+    </script>
+</body>
+</html>
