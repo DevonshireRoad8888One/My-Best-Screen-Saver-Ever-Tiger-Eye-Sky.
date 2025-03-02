@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dave's Garage Clock Screen Saver</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+        .digital-clock {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 200px; /* Increased clock size */
+            font-family: Arial, sans-serif;
+            color: white;
+            font-weight: bold;
+            text-shadow: 4px 4px 10px rgba(255, 255, 255, 0.8);
+        }
+        .date {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px; /* Adjusted size for date */
+            font-family: Arial, sans-serif;
+            color: white;
+            font-weight: normal;
+            text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.8);
+        }
+        .weekday {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 70px; /* Adjusted size for weekday */
+            font-family: Arial, sans-serif;
+            color: white;
+            font-weight: normal;
+            text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.8);
+            margin-left: 10px; /* Move the weekday text slightly to the right */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="vortexCanvas"></canvas>
+    <div class="digital-clock" id="clock"></div>
+    <div class="weekday" id="weekday"></div>
+    <div class="date" id="date"></div>
+    <script>
+        const canvas = document.getElementById('vortexCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Function to update canvas size and adjust elements accordingly
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // Initialize the canvas size and elements
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas); // Adjust on resize
+
+        const bands = 10;
+        const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+        let angle = 0;
+        const circles = [];
+        const sparkles = [];
+
+        function createElements(num) {
+            for (let i = 0; i < num; i++) {
+                circles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 40 + 10,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+                sparkles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 4 + 1,
+                    color: Math.random() > 0.5 ? 'gold' : 'silver'
+                });
+            }
+        }
+
+        function drawScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const bandHeight = canvas.height / bands;
+            for (let i = 0; i < bands; i++) {
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(0, i * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.25, i * bandHeight + Math.sin(angle + i) * 50,
+                    canvas.width * 0.75, i * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width, i * bandHeight
+                );
+                ctx.lineTo(canvas.width, (i + 1) * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.75, (i + 1) * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width * 0.25, (i + 1) * bandHeight + Math.sin(angle + i) * 50,
+                    0, (i + 1) * bandHeight
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            circles.forEach(circle => {
+                circle.x += circle.vx * 0.5;
+                circle.y += circle.vy * 0.5;
+                if (circle.x < 0 || circle.x > canvas.width) {
+                    circle.vx *= -1;
+                }
+                if (circle.y < 0 || circle.y > canvas.height) {
+                    circle.vy *= -1;
+                }
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = circle.color;
+                ctx.fill();
+            });
+
+            sparkles.forEach(sparkle => {
+                sparkle.x += (Math.random() - 0.5) * 2;
+                sparkle.y += (Math.random() - 0.5) * 2;
+                ctx.beginPath();
+                ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+                ctx.fillStyle = sparkle.color;
+                ctx.fill();
+            });
+
+            angle += 0.01;
+        }
+
+        // Create initial elements
+        createElements(100);
+
+        // Clock and Date functions
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const day = now.getDate();
+            const month = now.getMonth() + 1; // Months are 0-based
+            const year = now.getFullYear();
+            const weekday = now.toLocaleString('en-us', { weekday: 'long' });
+
+            // Update clock display
+            const clockElement = document.getElementById('clock');
+            clockElement.innerHTML = `${hours}:${minutes < 10 ? '0' + minutes : minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+
+            // Update weekday display
+            const weekdayElement = document.getElementById('weekday');
+            weekdayElement.innerHTML = weekday;
+
+            // Update date display
+            const dateElement = document.getElementById('date');
+            dateElement.innerHTML = `${month}/${day}/${year}`;
+
+            requestAnimationFrame(updateClock);
+        }
+
+        // Start clock update
+        updateClock();
+
+        // Animation loop
+        function animate() {
+            drawScene();
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation loop
+        animate();
+    </script>
+</body>
+</html>
