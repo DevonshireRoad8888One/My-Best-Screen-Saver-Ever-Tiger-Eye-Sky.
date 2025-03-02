@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dave's Garage Clock Screen Saver</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+        .digital-clock {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 200px; /* Increased clock size */
+            font-family: Arial, sans-serif;
+            color: white;
+            font-weight: bold;
+            text-shadow: 4px 4px 10px rgba(255, 255, 255, 0.8);
+        }
+        .date {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px; /* Adjusted size for date */
+            font-family: Arial, sans-serif;
+            color: white;
+            font-weight: normal;
+            text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.8);
+        }
+        .weekday {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 70px; /* Adjusted size for weekday */
+            font-family: Arial, sans-serif;
+            color: white;
+            font-weight: normal;
+            text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.8);
+            margin-left: 10px; /* Move the weekday text slightly to the right */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="vortexCanvas"></canvas>
+    <div class="digital-clock" id="clock"></div>
+    <div class="weekday" id="weekday"></div>
+    <div class="date" id="date"></div>
+    <script>
+        const canvas = document.getElementById('vortexCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const bands = 10;
+        const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+        let angle = 0;
+        const circles = [];
+        const sparkles = [];
+
+        function createElements(num) {
+            for (let i = 0; i < num; i++) {
+                circles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 40 + 10,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+                sparkles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 4 + 1,
+                    color: Math.random() > 0.5 ? 'gold' : 'silver'
+                });
+            }
+        }
+
+        function drawScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const bandHeight = canvas.height / bands;
+            for (let i = 0; i < bands; i++) {
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(0, i * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.25, i * bandHeight + Math.sin(angle + i) * 50,
+                    canvas.width * 0.75, i * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width, i * bandHeight
+                );
+                ctx.lineTo(canvas.width, (i + 1) * bandHeight);
+                ctx.bezierCurveTo(
+                    canvas.width * 0.75, (i + 1) * bandHeight + Math.cos(angle + i) * 50,
+                    canvas.width * 0.25, (i + 1) * bandHeight + Math.sin(angle + i) * 50,
+                    0, (i + 1) * bandHeight
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            circles.forEach(circle => {
+                circle.x += circle.vx * 0.5;
+                circle.y += circle.vy * 0.5;
+                if (circle.x < 0 || circle.x > canvas.width) circle.vx = -circle.vx;
+                if (circle.y < 0 || circle.y > canvas.height) circle.vy = -circle.vy;
+
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = circle.color;
+                ctx.fill();
+            });
+
+            sparkles.forEach(sparkle => {
+                sparkle.x += (Math.random() - 0.5) * 2;
+                sparkle.y += (Math.random() - 0.5) * 2;
+                if (sparkle.x < 0 || sparkle.x > canvas.width) sparkle.x = Math.random() * canvas.width;
+                if (sparkle.y < 0 || sparkle.y > canvas.height) sparkle.y = Math.random() * canvas.height;
+
+                ctx.beginPath();
+                ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+                ctx.fillStyle = sparkle.color;
+                ctx.fill();
+            });
+
+            angle += 0.01;
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const day = now.getDate();
+            const month = now.getMonth() + 1; // Months are 0-indexed, so we add 1
+            const year = now.getFullYear();
+            const weekday = now.toLocaleString('en-US', { weekday: 'long' });
+
+            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const dateString = `${month}/${day}/${year}`;
+            const weekdayString = weekday;
+
+            document.getElementById('clock').textContent = timeString;
+            document.getElementById('date').textContent = dateString;
+            document.getElementById('weekday').textContent = weekdayString;
+        }
+
+        function animate() {
+            drawScene();
+            updateTime();
+            requestAnimationFrame(animate);
+        }
+
+        createElements(100);  // Create initial elements
+        animate();  // Start the animation loop
+    </script>
+</body>
+</html>
